@@ -1,0 +1,148 @@
+/* 1. Main Container Setup */
+.settings-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0a0a12;
+  padding: 20px;
+  position: relative; /* REQUIRED: Anchor for the floating button */
+  overflow: hidden;
+}
+
+/* 2. NUCLEAR OPTION BACK BUTTON: 
+   Positions it completely away from the glass card 
+*/
+.floating-back-btn {
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  background: rgba(56, 189, 248, 0.1); /* Slight bg to see clickable area */
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer !important;
+  z-index: 9999; /* Forces it above EVERYTHING including toasts */
+  padding: 12px 20px;
+  border-radius: 8px;
+  transition: 0.3s;
+  pointer-events: auto !important;
+}
+
+.floating-back-btn:hover {
+  color: #fff;
+  background: rgba(56, 189, 248, 0.3);
+  transform: translateX(-5px);
+}
+
+/* 3. The Glass Card */
+.settings-glass-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 40px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  z-index: 1; /* Keeps it behind the button */
+}
+
+/* 4. Form Components */
+.settings-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.icon-badge {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.settings-header h2 {
+  color: #fff;
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+}
+
+.settings-header p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  margin-left: 5px;
+}
+
+.input-group input {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 15px;
+  border-radius: 10px;
+  color: #fff;
+  outline: none;
+  transition: 0.3s;
+}
+
+.input-group input:focus {
+  border-color: #2ed573;
+  box-shadow: 0 0 10px rgba(46, 213, 115, 0.2);
+}
+
+/* 5. Password Toggle & Button */
+.show-pwd-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -5px;
+  cursor: pointer;
+}
+
+.show-pwd-container input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2ed573;
+  cursor: pointer;
+}
+
+.show-pwd-container label {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.update-btn {
+  background: #2ed573;
+  color: #0a0a12;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.3s;
+}
+
+.update-btn:hover {
+  background: #26af5f;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(46, 213, 115, 0.3);
+}
