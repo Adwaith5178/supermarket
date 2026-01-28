@@ -2,7 +2,7 @@
 
  Project Description
  
-This project is an automated retail solution designed to optimize supermarket revenue and minimize food waste through a data-driven pricing engine.
+This project is an automated retail solution designed to optimize supermarket revenue and minimize  wastage through a data-driven pricing engine.
 Unlike traditional static pricing, this system analyzes real-time inventory levels, product shelf-life, and demand patterns to adjust prices dynamically.
 The system features a Dual Login Portal for Administrators and Customers. Admins gain access to financial analytics and inventory clearance tools, while customers experience 
 a responsive interface with real-time price updates. The core logic utilizes Python-based processing to calculate optimal price points, 
