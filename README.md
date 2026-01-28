@@ -33,4 +33,6 @@ Contact Details: adwaithkrishna5178@gmail.com
 
 Project Guidance
 
-Guide’s Name: Ms.Kavitha S
+Project Guide: Ms.Kavitha S
+
+Project Coordinator: Dr.Jijo Varghese
