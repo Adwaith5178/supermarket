@@ -1,4 +1,4 @@
- Dynamic Pricing System Supermarket Retail
+ Dynamic Pricing System in Supermarket Retail
 
  Project Description
  
