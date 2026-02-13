@@ -4,44 +4,66 @@ from datetime import datetime
 
 def calculate_price():
     try:
-        # 1. Read the product JSON from Node.js
+        if len(sys.argv) < 2:
+            return
+
         product = json.loads(sys.argv[1])
+        base_price = product.get('basePrice', 0)
+        stock_level = product.get('stockLevel', 100)
         
-        base_price = product['basePrice']
-        stock_level = product.get('stockLevel', 100) # Default to 100 if not provided
+        # --- 1. Parse Dates with Safety Checks ---
+        expiry_raw = product.get('expiryDate')
+        # If expiry is missing, we can't calculate discount, so return base
+        if not expiry_raw or not isinstance(expiry_raw, str):
+            print(round(base_price, 2))
+            return
+
+        expiry_date = datetime.strptime(expiry_raw.split('T')[0], '%Y-%m-%d')
         
-        # 2. Extract date
-        expiry_date_str = product['expiryDate'].split('T')[0]
-        expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d')
-        
-        # 3. Calculate days left (Dynamic today)
+        # Get festival date - safely check if it's a string before splitting
+        fest_end_str = product.get('festivalEndDate')
         today = datetime.now()
+
+        # --- 2. Festive Hike Logic ---
+        hike_multiplier = 1.0
+        if fest_end_str and isinstance(fest_end_str, str):
+            fest_end = datetime.strptime(fest_end_str.split('T')[0], '%Y-%m-%d')
+            if today <= fest_end:
+                hike_multiplier = 1.30 # 30% Hike
+
+        # --- 3. Discount Logic ---
         days_left = (expiry_date - today).days
         
-        # Initialize discount factors
+        # Calculate Expiry Discount
         time_discount = 1.0
-        stock_discount = 1.0
-
-        # 4. AI Pricing Logic - Time Trigger
         if days_left <= 3:
             time_discount = 0.70  # 30% OFF
-        elif days_left <= 10:     # Increased to 10 to match your React filter
+        elif days_left <= 10:
             time_discount = 0.90  # 10% OFF
 
-        # 5. AI Pricing Logic - Stock Trigger (NEW)
-        # If stock is low, apply an additional 5% clearance discount
+        # Calculate Stock Discount
+        stock_discount = 1.0
         if 0 < stock_level <= 5:
-            stock_discount = 0.95 
+            stock_discount = 0.90 # 10% OFF
 
-        # Apply the best discount found
+        # Use the lowest discount available
         final_discount = min(time_discount, stock_discount)
-        new_price = base_price * final_discount
 
-        # 6. Output ONLY the number so Node.js can parse it
+        # --- 4. Final Calculation ---
+        new_price = base_price * hike_multiplier * final_discount
+
+        # Print ONLY the number so Node.js can parse it
         print(round(new_price, 2))
         
     except Exception as e:
-        sys.stderr.write(str(e))
+        # Log the error to stderr and fallback to base_price so the server doesn't hang
+        sys.stderr.write(f"Error: {str(e)}")
+        # Try to print the base price as a fallback if everything fails
+        try:
+            p = json.loads(sys.argv[1])
+            print(p.get('basePrice', 0))
+        except:
+            pass
         sys.exit(1)
 
 if __name__ == "__main__":

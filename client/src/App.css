@@ -577,3 +577,133 @@ body {
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
+/* --- FESTIVE BASE THEME --- */
+.main-container.festive-active {
+  background: linear-gradient(135deg, #2b199c 0%, #2d1b33 100%);
+  color: #fff;
+  transition: all 0.5s ease;
+}
+
+.festive-active .navbar {
+  background: rgba(255, 215, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+/* --- GLOWING TEXT & TITLES --- */
+.festive-glow-text {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 165, 0, 0.5);
+  font-family: 'Trebuchet MS', sans-serif;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.9; }
+}
+
+/* --- LANTERN DECORATIONS --- */
+.festive-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.lantern {
+  position: absolute;
+  font-size: 2.5rem;
+  top: -10px;
+  animation: swing 3s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.lantern-left { left: 10%; }
+.lantern-right { right: 10%; }
+
+@keyframes swing {
+  0% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+  100% { transform: rotate(-10deg); }
+}
+
+/* --- FESTIVE CART MODAL --- */
+.cart-overlay-modal.festive-cart {
+  background: #2d1b33;
+  border: 2px solid #ffd700;
+  color: #fff;
+}
+
+.festive-cart .cart-item-row {
+  border-bottom: 1px dashed #ffd70055 !important;
+}
+
+.festive-cart .buy-all-btn {
+  background: linear-gradient(90deg, #ff4757, #ffd700);
+  border: none;
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+/* --- GLOWING PRODUCT CARDS --- */
+.festive-active .product-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 16px;
+  
+  /* The "Aura" Effect: Stacked shadows for depth */
+  box-shadow: 
+    0 0 10px rgba(255, 215, 0, 0.3), /* Inner soft glow */
+    0 0 25px rgba(255, 165, 0, 0.1), /* Outer warm spread */
+    0 10px 20px rgba(0, 0, 0, 0.05); /* Subtle floor shadow */
+  
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Hover state: Makes the card "illuminate" more brightly */
+.festive-active .product-card:hover {
+  transform: translateY(-10px); /* Lift effect */
+  border-color: #ffd700;
+  
+  /* Intense golden glow on hover */
+  box-shadow: 
+    0 0 20px rgba(255, 215, 0, 0.6), 
+    0 0 40px rgba(255, 200, 0, 0.3),
+    0 20px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Optional: Adding a soft breathing animation to the glow */
+@keyframes festive-pulse {
+  0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); }
+  100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+}
+
+.festive-active .product-card {
+  animation: festive-pulse 3s infinite ease-in-out;
+}
+
+/* --- TOGGLE BUTTON --- */
+.festive-toggle-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid #ffd700;
+  background: transparent;
+  color: #ffd700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.festive-toggle-btn.active {
+  background: #ffd700;
+  color: #1a0f1f;
+  box-shadow: 0 0 10px #ffd700;
+}

@@ -5,20 +5,40 @@ const { spawn } = require('child_process');
 const bcrypt = require('bcryptjs');
 const cron = require('node-cron');
 require('dotenv').config();
-
 const Product = require('./models/Product');
 const User = require('./models/User');
-
 const app = express();
 app.use(cors());
 app.use(express.json());
-
 const PORT = process.env.PORT || 5000;
+
+// --- GLOBAL THEME STATE ---
+// This stores the active theme in memory (resets on server restart)
+let globalTheme = "default"; 
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.log("❌ DB Error:", err));
+
+// --- NEW: THEME MANAGEMENT ROUTES ---
+
+// Get current global theme
+app.get('/api/theme', (req, res) => {
+    res.json({ theme: globalTheme });
+});
+
+// Update global theme (Admin Only logic should be handled here or on frontend)
+app.post('/api/theme', (req, res) => {
+    const { theme } = req.body;
+    if (['default', 'onam', 'christmas'].includes(theme)) {
+        globalTheme = theme;
+        console.log(`🎨 Global Theme updated to: ${theme}`);
+        res.json({ success: true, theme: globalTheme });
+    } else {
+        res.status(400).json({ success: false, message: "Invalid theme type" });
+    }
+});
 
 // --- 1. AUTHENTICATION & SECURITY ROUTES ---
 
@@ -50,7 +70,7 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-// Login - Enhanced to handle display names vs DB usernames
+// Login
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -83,7 +103,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Update Password - Fixed "User not found" by normalizing "System Admin" to "admin"
+// Update Password
 app.post('/api/auth/update-password', async (req, res) => {
     try {
         const { username, currentPassword, newPassword } = req.body;
@@ -150,7 +170,6 @@ app.post('/api/purchase', async (req, res) => {
 app.get('/api/products', async (req, res) => {
   try {
     const now = new Date();
-    // Logic: Only fetch products that have not expired yet
     const products = await Product.find({ expiryDate: { $gt: now } });
     res.json(products);
   } catch (err) {
@@ -163,7 +182,9 @@ app.post('/api/products', async (req, res) => {
     const productData = {
         ...req.body,
         wholesalePrice: req.body.wholesalePrice || 0,
-        unitsSold: 0
+        unitsSold: 0,
+        isFestive: req.body.isFestive || false,
+        festivalEndDate: req.body.festivalEndDate || null
     };
     const newProduct = new Product(productData);
     await newProduct.save();
@@ -181,8 +202,6 @@ app.delete('/api/products/out-of-stock', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 // --- 4. AI PRICING ENGINE TRIGGER ---
 
@@ -215,7 +234,6 @@ app.post('/api/update-prices', async (req, res) => {
 });
 
 // --- 5. AUTOMATED CLEANUP (Cron Job) ---
-// Runs every minute to ensure expired items are purged quickly
 cron.schedule('* * * * *', async () => {
   try {
     const now = new Date();
