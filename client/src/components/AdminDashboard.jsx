@@ -15,8 +15,18 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const AdminDashboard = ({ products, refreshData, onRunAi, isAiLoading }) => {
   const [formData, setFormData] = useState({
-    name: '', category: 'Dairy', wholesalePrice: '', basePrice: '', stockLevel: '', 
-    expiryDate: '', minPrice: 0, maxPrice: 0, salesVelocity: 50
+    name: '', 
+    category: 'Dairy', 
+    wholesalePrice: '', 
+    basePrice: '', 
+    stockLevel: '', 
+    expiryDate: '', 
+    minPrice: 0, 
+    maxPrice: 0, 
+    salesVelocity: 50,
+    // --- NEW STRATEGY FIELDS ---
+    isFestive: false,
+    festivalEndDate: ''
   });
 
   // --- Helper Functions ---
@@ -60,10 +70,10 @@ const AdminDashboard = ({ products, refreshData, onRunAi, isAiLoading }) => {
       });
       alert("New product added to inventory!");
       
-      // --- FIX 1: RESET FORM DATA TO BLANK ---
       setFormData({
         name: '', category: 'Dairy', wholesalePrice: '', basePrice: '', stockLevel: '', 
-        expiryDate: '', minPrice: 0, maxPrice: 0, salesVelocity: 50
+        expiryDate: '', minPrice: 0, maxPrice: 0, salesVelocity: 50,
+        isFestive: false, festivalEndDate: '' // Reset new fields
       });
 
       refreshData();
@@ -120,7 +130,6 @@ const AdminDashboard = ({ products, refreshData, onRunAi, isAiLoading }) => {
         <div style={styles.sectionCard}>
           <h3>Add New Inventory</h3>
           <form onSubmit={handleAddProduct} style={styles.form}>
-            {/* FIX 2: ADDED value={formData.xxx} TO ALL INPUTS */}
             <input 
                 type="text" 
                 placeholder="Product Name" 
@@ -163,15 +172,41 @@ const AdminDashboard = ({ products, refreshData, onRunAi, isAiLoading }) => {
                 onChange={e => setFormData({...formData, stockLevel: e.target.value})} 
                 required 
             />
+            
+            {/* NEW: FESTIVE TOGGLE */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#0f0f1a', padding: '10px', borderRadius: '5px', border: '1px solid #444' }}>
+                <input 
+                    type="checkbox" 
+                    id="isFestive"
+                    checked={formData.isFestive}
+                    onChange={e => setFormData({...formData, isFestive: e.target.checked})}
+                />
+                <label htmlFor="isFestive" style={{ fontSize: '14px', cursor: 'pointer' }}>🎉 Mark as Festive High-Demand</label>
+            </div>
+
+            {/* NEW: CONDITIONAL DATE PICKER */}
+            {formData.isFestive && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                    <label style={{ fontSize: '12px', color: '#ffa502'}}>Festival End Date (Price Drop Starts After This)</label>
+                    <input 
+                        type="date" 
+                        style={{...styles.input, borderColor: '#ffa502'}} 
+                        value={formData.festivalEndDate} 
+                        onChange={e => setFormData({...formData, festivalEndDate: e.target.value})} 
+                        required 
+                    />
+                </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px'}}>
-               <label style={{ fontSize: '12px', color: '#aaa'}}>Expiry Date</label>
-               <input 
-                type="date" 
-                style={styles.input} 
-                value={formData.expiryDate} 
-                onChange={e => setFormData({...formData, expiryDate: e.target.value})} 
-                required 
-               />
+                <label style={{ fontSize: '12px', color: '#aaa'}}>Expiry Date</label>
+                <input 
+                 type="date" 
+                 style={styles.input} 
+                 value={formData.expiryDate} 
+                 onChange={e => setFormData({...formData, expiryDate: e.target.value})} 
+                 required 
+                />
             </div>
             <button type="submit" style={styles.submitBtn}>Add to Stock</button>
           </form>
@@ -189,10 +224,10 @@ const AdminDashboard = ({ products, refreshData, onRunAi, isAiLoading }) => {
           <thead>
             <tr style={{ textAlign: 'left', borderBottom: '2px solid #444' }}>
               <th>Name</th>
+              <th>Status</th>
               <th>Stock</th>
               <th>Expiry Watch</th>
               <th>Units Sold</th>
-              <th>Unit Cost</th>
               <th>Selling Price</th>
               <th style={{ textAlign: 'right' }}>Profit Obtained</th>
             </tr>
@@ -204,6 +239,13 @@ const AdminDashboard = ({ products, refreshData, onRunAi, isAiLoading }) => {
               return (
                 <tr key={p._id} style={{ borderBottom: '1px solid #333' }}>
                   <td style={{ padding: '12px 0' }}>{p.name}</td>
+                  <td>
+                    {p.isFestive ? (
+                      <span style={{ fontSize: '10px', background: '#ffa502', color: 'black', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>FESTIVE</span>
+                    ) : (
+                      <span style={{ fontSize: '10px', color: '#666' }}>Standard</span>
+                    )}
+                  </td>
                   <td style={{ color: p.stockLevel < 10 ? '#ff4757' : 'white' }}>{p.stockLevel}</td>
                   <td>
                     <span style={{ 
@@ -219,9 +261,9 @@ const AdminDashboard = ({ products, refreshData, onRunAi, isAiLoading }) => {
                     </span>
                   </td>
                   <td>{p.unitsSold}</td>
-                  <td>₹{p.wholesalePrice}</td>
-                  <td style={{ color: p.currentPrice < p.basePrice ? '#38bdf8' : 'white' }}>
+                  <td style={{ color: p.currentPrice > p.basePrice ? '#ffa502' : p.currentPrice < p.basePrice ? '#38bdf8' : 'white' }}>
                     ₹{p.currentPrice.toFixed(2)} 
+                    {p.currentPrice > p.basePrice && <span style={{ fontSize: '10px', marginLeft: '5px' }}>📈 HIKE</span>}
                     {p.currentPrice < p.basePrice && <span style={{ fontSize: '10px', marginLeft: '5px' }}>📉 AI</span>}
                   </td>
                   <td style={{ 
