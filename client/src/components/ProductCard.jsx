@@ -5,31 +5,50 @@ const ProductCard = ({ product, onAddToCart, userRole }) => {
   const [timeLeft, setTimeLeft] = useState("");
   const [isDealActive, setIsDealActive] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [maniaActive, setManiaActive] = useState(false); 
 
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date().getTime();
+      
+      let isMania = false;
+      if (product.isOnMania && product.maniaActivatedAt) {
+        const maniaStart = new Date(product.maniaActivatedAt).getTime();
+        const maniaEnd = maniaStart + (24 * 60 * 60 * 1000);
+        const maniaDistance = maniaEnd - now;
+        
+        if (maniaDistance > 0) {
+          isMania = true;
+          setManiaActive(true);
+          const h = Math.floor((maniaDistance / (1000 * 60 * 60)) % 24);
+          const m = Math.floor((maniaDistance / 1000 / 60) % 60);
+          const s = Math.floor((maniaDistance / 1000) % 60);
+          setTimeLeft(`${h}h ${m}m ${s}s`);
+        } else {
+          setManiaActive(false);
+        }
+      }
+
       const end = new Date(product.expiryDate).getTime();
       const tenDaysInMs = 10 * 24 * 60 * 60 * 1000;
       const startTime = end - tenDaysInMs;
       const distance = end - now;
 
-      // Logic for standard expiry/low stock deals
       const isNearExpiry = now >= startTime && distance > 0;
       const isLowStock = product.stockLevel > 0 && product.stockLevel < 5;
-
-      // Check if a festival is currently active
       const isFestiveActive = product.isFestive && new Date(product.festivalEndDate) > new Date();
 
-      if (isNearExpiry || isLowStock || isFestiveActive) {
+      if (isMania || isNearExpiry || isLowStock || isFestiveActive) {
         setIsDealActive(true);
-        if (distance > 0) {
-          const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-          const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-          const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-          setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
-        } else {
-          setTimeLeft("Expired");
+        if (!isMania) {
+          if (distance > 0) {
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+          } else {
+            setTimeLeft("Expired");
+          }
         }
       } else {
         setIsDealActive(false);
@@ -37,9 +56,13 @@ const ProductCard = ({ product, onAddToCart, userRole }) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [product.expiryDate, product.stockLevel, product.isFestive, product.festivalEndDate]);
+  }, [product.expiryDate, product.stockLevel, product.isFestive, product.festivalEndDate, product.isOnMania, product.maniaActivatedAt]);
 
-  const discount = Math.round(((product.basePrice - product.currentPrice) / product.basePrice) * 100);
+  const currentPriceToDisplay = maniaActive 
+    ? Math.round(product.currentPrice * (1 - product.maniaDiscount / 100)) 
+    : product.currentPrice;
+
+  const discount = Math.round(((product.basePrice - currentPriceToDisplay) / product.basePrice) * 100);
 
   const incrementQty = (e) => {
     e.stopPropagation();
@@ -54,19 +77,23 @@ const ProductCard = ({ product, onAddToCart, userRole }) => {
   const handleBuyNow = (e) => {
     e.stopPropagation();
     setIsPurchased(true);
-    onAddToCart({ ...product, selectedQuantity: quantity }); 
+    onAddToCart({ ...product, currentPrice: currentPriceToDisplay, selectedQuantity: quantity }); 
   };
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    onAddToCart({ ...product, selectedQuantity: quantity });
+    onAddToCart({ ...product, currentPrice: currentPriceToDisplay, selectedQuantity: quantity });
   };
 
   return (
     <div className="product-card" style={{ 
       position: 'relative', 
-      border: product.stockLevel < 5 && !isPurchased ? '2px solid #ff4757' : '1px solid #eee',
-      boxShadow: product.isFestive ? '0 4px 15px rgba(255, 165, 2, 0.2)' : 'none' 
+      transition: 'all 0.3s ease',
+      transform: maniaActive ? 'scale(1.02)' : 'scale(1)',
+      border: maniaActive ? '3px solid #ff4757' : (product.stockLevel < 5 && !isPurchased ? '2px solid #ff4757' : '1px solid #eee'),
+      boxShadow: maniaActive ? '0 10px 25px rgba(255, 71, 87, 0.4)' : (product.isFestive ? '0 4px 15px rgba(255, 165, 2, 0.2)' : 'none'),
+      animation: maniaActive ? 'mania-border-glow 2s infinite' : 'none',
+      zIndex: maniaActive ? 5 : 1
     }}>
       <style>
         {`
@@ -75,44 +102,54 @@ const ProductCard = ({ product, onAddToCart, userRole }) => {
             70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
           }
-          @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-2px); }
-            50% { transform: translateX(2px); }
-            75% { transform: translateX(-2px); }
-            100% { transform: translateX(0); }
+          @keyframes mania-border-glow {
+            0% { border-color: #ff4757; box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4); }
+            50% { border-color: #ffa502; box-shadow: 0 10px 30px rgba(255, 165, 2, 0.5); }
+            100% { border-color: #ff4757; box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4); }
           }
-          @keyframes festive-glow {
-            0% { color: #ffa502; }
-            50% { color: #ff4757; }
-            100% { color: #ffa502; }
+          @keyframes float-emoji {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
           }
         `}
       </style>
 
-      {/* Hurry Badge (Priority 1) */}
-      {!isPurchased && product.stockLevel > 0 && product.stockLevel < 5 && (
+      {/* Mania Badge (Highest Priority) */}
+      {!isPurchased && maniaActive && (
+        <div style={{ ...styles.maniaBadge, animation: 'pulse-red 1s infinite' }}>
+          🔥 DAILY MANIA
+        </div>
+      )}
+
+      {/* Hurry Badge (Priority 2) */}
+      {!isPurchased && !maniaActive && product.stockLevel > 0 && product.stockLevel < 5 && (
         <div style={{ ...styles.hurryBadge, animation: 'pulse-red 1.5s infinite' }}>
           🚨 HURRY UP!
         </div>
       )}
 
-      {/* Festival Badge (Priority 2) */}
-      {!isPurchased && product.isFestive && (
+      {/* Festival Badge (Priority 3) */}
+      {!isPurchased && !maniaActive && product.isFestive && (
         <div style={styles.festiveBadge}>
           🎉 FESTIVE OFFER
         </div>
       )}
 
       {!isPurchased && isDealActive && discount > 0 && (
-        <div className="offer-badge">{discount}% OFF</div>
+        <div className="offer-badge" style={{ 
+            background: maniaActive ? 'linear-gradient(45deg, #ff4757, #ffa502)' : '#ff4757',
+            fontWeight: '900'
+        }}>
+            {discount}% OFF
+        </div>
       )}
       
-      <div style={{fontSize: '50px', marginBottom: '10px'}}>
-        {isPurchased ? '✅' : product.isFestive ? '🎁' : '🛒'}
+      <div style={{fontSize: '60px', marginBottom: '10px', animation: maniaActive ? 'float-emoji 2s infinite ease-in-out' : 'none'}}>
+        {isPurchased ? '✅' : maniaActive ? '🎁' : (product.isFestive ? '🎁' : '🛒')}
       </div>
 
-      <h3 style={{ color: '#2d3436', margin: '10px 0 5px 0', fontSize: '1.2rem', fontWeight: 'bold' }}>
+      <h3 style={{ color: '#2d3436', margin: '10px 0 5px 0', fontSize: '1.25rem', fontWeight: '900' }}>
         {product.name}
       </h3>
 
@@ -131,27 +168,15 @@ const ProductCard = ({ product, onAddToCart, userRole }) => {
             
             {isDealActive && (
               <div style={{ 
-                background: product.stockLevel < 5 ? '#fff2f2' : (product.isFestive ? '#fff9e6' : '#f1f2f6'), 
-                padding: '6px 8px', 
-                borderRadius: '4px', 
-                marginTop: '4px',
-                border: product.stockLevel < 5 ? '1px solid #ff4757' : (product.isFestive ? '1px solid #ffa502' : 'none')
+                background: maniaActive ? '#fff5f5' : (product.stockLevel < 5 ? '#fff2f2' : (product.isFestive ? '#fff9e6' : '#f1f2f6')), 
+                padding: '8px 10px', 
+                borderRadius: '8px', 
+                marginTop: '6px',
+                border: maniaActive ? '2px dashed #ff4757' : (product.stockLevel < 5 ? '1px solid #ff4757' : 'none')
               }}>
-                {product.stockLevel < 5 && product.stockLevel > 0 ? (
-                  <p style={{ 
-                    color: '#ff4757', 
-                    fontSize: '0.9rem', 
-                    margin: 0, 
-                    fontWeight: '900',
-                    animation: 'shake 0.5s infinite' 
-                  }}>
-                    🔥 ONLY {product.stockLevel} STOCKS LEFT!
-                  </p>
-                ) : (
-                  <p style={{ color: product.isFestive ? '#e67e22' : '#ff4757', fontSize: '0.8rem', margin: 0, fontWeight: 'bold' }}>
-                    {product.isFestive ? '✨ Sale ends in: ' : '⏱ Ends in: '}{timeLeft}
-                  </p>
-                )}
+                <p style={{ color: maniaActive || product.stockLevel < 5 ? '#ff4757' : '#e67e22', fontSize: '0.85rem', margin: 0, fontWeight: '900' }}>
+                  {maniaActive ? '⚡ MANIA ENDS IN: ' : (product.isFestive ? '✨ Sale ends in: ' : '⏱ Ends in: ')}{timeLeft}
+                </p>
               </div>
             )}
           </>
@@ -159,12 +184,12 @@ const ProductCard = ({ product, onAddToCart, userRole }) => {
       </div>
       
       <div style={{margin: '15px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}}>
-        <span style={{fontSize: '24px', fontWeight: 'bold', color: isPurchased ? '#888' : '#2ed573'}}>
-          ₹{product.currentPrice}
+        <span style={{fontSize: '28px', fontWeight: '900', color: isPurchased ? '#888' : '#ff4757'}}>
+          ₹{currentPriceToDisplay}
         </span>
         
-        {!isPurchased && (discount > 0 || product.currentPrice < product.basePrice) && (
-          <span style={{textDecoration: 'line-through', color: '#ffa502', fontSize: '1.1rem'}}>
+        {!isPurchased && (discount > 0 || currentPriceToDisplay < product.basePrice) && (
+          <span style={{textDecoration: 'line-through', color: '#ffa502', fontSize: '1.2rem', opacity: 0.8}}>
             ₹{product.basePrice}
           </span>
         )}
@@ -180,10 +205,18 @@ const ProductCard = ({ product, onAddToCart, userRole }) => {
       
       {!isPurchased ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <button onClick={handleAddToCart} style={styles.cartBtn} disabled={product.stockLevel <= 0}>
-            {product.stockLevel > 0 ? `ADD ${quantity} TO CART` : 'OUT OF STOCK'}
+          <button 
+            onClick={handleAddToCart} 
+            style={maniaActive ? {...styles.cartBtn, background: 'linear-gradient(45deg, #ff4757, #ff6b81)', boxShadow: '0 4px 15px rgba(255, 71, 87, 0.4)'} : styles.cartBtn} 
+            disabled={product.stockLevel <= 0}
+          >
+            {product.stockLevel > 0 ? (maniaActive ? `🔥 GRAB ${quantity} NOW` : `ADD ${quantity} TO CART`) : 'OUT OF STOCK'}
           </button>
-          <button onClick={handleBuyNow} style={styles.buyBtn} disabled={product.stockLevel <= 0}>
+          <button 
+            onClick={handleBuyNow} 
+            style={maniaActive ? {...styles.buyBtn, borderColor: '#ff4757', color: '#ff4757'} : styles.buyBtn} 
+            disabled={product.stockLevel <= 0}
+          >
             BUY NOW
           </button>
         </div>
@@ -195,9 +228,12 @@ const ProductCard = ({ product, onAddToCart, userRole }) => {
 };
 
 const styles = {
-  cartBtn: { width: '100%', padding: '12px', background: '#2f3542', color: 'white', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 'bold' },
-  buyBtn: { width: '100%', padding: '10px', background: 'transparent', color: '#2f3542', borderRadius: '10px', border: '2px solid #2f3542', cursor: 'pointer', fontWeight: 'bold' },
-  purchasedBtn: { width: '100%', padding: '12px', background: '#e0e0e0', color: '#888', borderRadius: '10px', border: 'none', cursor: 'not-allowed', fontWeight: 'bold' },
+  cartBtn: { width: '100%', padding: '12px', background: '#2f3542', color: 'white', borderRadius: '12px', border: 'none', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' },
+  buyBtn: { width: '100%', padding: '10px', background: 'transparent', color: '#2f3542', borderRadius: '12px', border: '2px solid #2f3542', cursor: 'pointer', fontWeight: 'bold' },
+  purchasedBtn: { width: '100%', padding: '12px', background: '#e0e0e0', color: '#888', borderRadius: '12px', border: 'none', cursor: 'not-allowed', fontWeight: 'bold' },
+  maniaBadge: {
+    position: 'absolute', top: '5px', right: '5px', background: '#ff4757', color: 'white', padding: '8px 15px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '900', zIndex: 10, boxShadow: '0 4px 15px rgba(255, 71, 87, 0.5)', border: '2px solid white'
+  },
   hurryBadge: {
     position: 'absolute', top: '10px', right: '10px', background: '#ff4757', color: 'white', padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '900', zIndex: 10, boxShadow: '0 4px 15px rgba(255, 71, 87, 0.4)', letterSpacing: '0.5px'
   },
@@ -205,17 +241,13 @@ const styles = {
     position: 'absolute', top: '10px', left: '10px', background: '#ffa502', color: 'white', padding: '4px 10px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold', zIndex: 9
   },
   qtyContainer: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px', padding: '5px', background: '#f8f9fa', borderRadius: '8px'
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px', padding: '5px', background: '#f8f9fa', borderRadius: '10px'
   },
   qtyBtn: {
-    width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #ced4da', background: 'white', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333'
+    width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #ced4da', background: 'white', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333'
   },
   qtyText: {
-    fontSize: '1.2rem', 
-    fontWeight: '900', 
-    minWidth: '20px',
-    color: '#000000', 
-    textAlign: 'center'
+    fontSize: '1.2rem', fontWeight: '900', minWidth: '25px', color: '#000000', textAlign: 'center'
   }
 };
 
