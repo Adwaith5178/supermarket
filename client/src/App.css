@@ -707,3 +707,78 @@ body {
   color: #1a0f1f;
   box-shadow: 0 0 10px #ffd700;
 }
+/* --- THE MANIA "HYPER" STATE --- */
+.product-card.mania-active {
+  border: 3px solid #ff4757;
+  transform: scale(1.03);
+  z-index: 5;
+  animation: mania-border-glow 2s infinite;
+}
+
+/* Animations */
+@keyframes mania-border-glow {
+  0% { 
+    border-color: #ff4757; 
+    box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4); 
+  }
+  50% { 
+    border-color: #ffa502; 
+    box-shadow: 0 10px 35px rgba(255, 165, 2, 0.6); 
+  }
+  100% { 
+    border-color: #ff4757; 
+    box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4); 
+  }
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+}
+
+@keyframes float-emoji {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+/* Badges */
+.offer-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: #ff4757;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 0.85rem;
+}
+
+.mania-active .offer-badge {
+  background: linear-gradient(45deg, #ff4757, #ffa502);
+  box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
+}
+
+/* Buttons */
+.cart-btn {
+  transition: all 0.2s ease;
+}
+
+.cart-btn:active {
+  transform: scale(0.95);
+}
+.product-card {
+  width: 300px;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+}

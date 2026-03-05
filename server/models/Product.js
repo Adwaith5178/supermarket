@@ -17,11 +17,26 @@ const ProductSchema = new mongoose.Schema({
     isFestive: { 
         type: Boolean, 
         default: false 
-    }, // Checkbox to mark specific items for hike
+    }, 
     
     festivalEndDate: { 
         type: Date 
-    } // The date after which the price starts dropping
+    },
+
+    // --- NEW WEDNESDAY MANIA FIELDS ---
+    isOnMania: { 
+        type: Boolean, 
+        default: false 
+    }, // Marks if the product is currently in the 24h flash sale
+
+    maniaDiscount: { 
+        type: Number, 
+        default: 0 
+    }, // The manual percentage discount set by Admin
+
+    maniaActivatedAt: { 
+        type: Date 
+    } // The timestamp used to calculate the 24-hour expiry
 });
 
 module.exports = mongoose.model('Product', ProductSchema);

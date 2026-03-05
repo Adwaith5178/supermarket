@@ -4,14 +4,27 @@ const cors = require('cors');
 const { spawn } = require('child_process');
 const bcrypt = require('bcryptjs');
 const cron = require('node-cron');
-const stringSimilarity = require('string-similarity'); // Added for Fuzzy Matching
+const stringSimilarity = require('string-similarity'); 
 require('dotenv').config();
+
 const Product = require('./models/Product');
 const User = require('./models/User');
+const maniaRoutes = require('./routes/maniaRoutes');
+
 const app = express();
-app.use(cors());
+
+// --- 1. MIDDLEWARE & SECURITY (STABILIZED) ---
+app.use(cors({
+    origin: 'http://localhost:5173', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
 app.use(express.json());
+
 const PORT = process.env.PORT || 5000;
+
+// --- 2. ROUTES REGISTRATION ---
+app.use('/api/mania', maniaRoutes); 
 
 // --- GLOBAL THEME STATE ---
 let globalTheme = "default"; 
@@ -134,8 +147,6 @@ app.post('/api/purchase', async (req, res) => {
 });
 
 // --- 3. PRODUCT MANAGEMENT & BULK UPDATE ---
-
-// STABILIZED: Bulk Stock Update with Fuzzy Name Matching
 app.post('/api/products/bulk-stock-update', async (req, res) => {
     const { updates } = req.body;
     try {
@@ -143,15 +154,11 @@ app.post('/api/products/bulk-stock-update', async (req, res) => {
             return res.status(400).json({ error: "Invalid updates format" });
         }
 
-        // Get all current product names from DB for matching
         const allProducts = await Product.find({}, 'name');
         const dbProductNames = allProducts.map(p => p.name);
 
         const bulkOps = updates.map(u => {
-            // Find the closest match in the database
             const matches = stringSimilarity.findBestMatch(u.name, dbProductNames);
-            
-            // Only update if the match is stronger than 70% confidence
             if (matches.bestMatch.rating > 0.7) {
                 return {
                     updateOne: {
@@ -168,10 +175,8 @@ app.post('/api/products/bulk-stock-update', async (req, res) => {
         }
 
         const result = await Product.bulkWrite(bulkOps);
-        console.log(`📦 Fuzzy Bulk Sync: Matched and Updated ${result.modifiedCount} items.`);
         res.json({ success: true, updatedCount: result.modifiedCount });
     } catch (err) {
-        console.error("Bulk update server error:", err);
         res.status(500).json({ error: "Internal server error during bulk update" });
     }
 });
@@ -227,7 +232,6 @@ app.post('/api/update-prices', async (req, res) => {
                     resolve();
                 });
                 python.stderr.on('data', (data) => { 
-                    console.error(`Python Error: ${data}`);
                     resolve(); 
                 });
             });
@@ -239,7 +243,9 @@ app.post('/api/update-prices', async (req, res) => {
     }
 });
 
-// --- 5. AUTOMATED CLEANUP (Cron Job) ---
+// --- 5. AUTOMATED CLEANUP & MANIA SCHEDULER (Cron Jobs) ---
+
+// Daily/Minute Cleanup for Expiry
 cron.schedule('* * * * *', async () => {
   try {
     const now = new Date();
@@ -250,6 +256,32 @@ cron.schedule('* * * * *', async () => {
   } catch (err) {
     console.error("Cleanup error:", err);
   }
+});
+
+// THURSDAY 12:00 AM: Auto-End Wednesday Mania
+// Format: Minute Hour DayOfMonth Month DayOfWeek
+cron.schedule('0 0 * * 4', async () => {
+    console.log('🕒 Thursday 12:00 AM: Automatically ending Wednesday Mania...');
+    try {
+        const result = await Product.updateMany(
+            { isOnMania: true },
+            [
+                {
+                    $set: { 
+                        isOnMania: false,
+                        maniaDiscount: 0,
+                        currentPrice: "$basePrice" 
+                    } 
+                }
+            ]
+        );
+        console.log(`✅ Mania Ended Successfully. Restored ${result.modifiedCount} products.`);
+    } catch (err) {
+        console.error('❌ Mania Auto-End Error:', err);
+    }
+}, {
+    scheduled: true,
+    timezone: "Asia/Kolkata" // Forces the job to run at 12:00 AM India Time
 });
 
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

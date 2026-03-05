@@ -38,7 +38,7 @@ def calculate_price():
         time_discount = 1.0
         if days_left <= 3:
             time_discount = 0.70  # 30% OFF
-        elif days_left <= 10:
+        elif days_left <= 15:
             time_discount = 0.90  # 10% OFF
 
         # Calculate Stock Discount
