@@ -1,42 +1,73 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const Sidebar = ({ activeCategory, setCategory }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   // Mapping categories to icons for better visual recognition
   const categories = [
     { name: "All", icon: "🏠" },
     { name: "Dairy", icon: "🥛" },
     { name: "Bakery", icon: "🍞" },
-    { name: "Produce", icon: "🥦" },
-    { name: "Meat", icon: "🥩" }
+    { name: "Produce", icon: "🌾" },
+    { name: "Meat", icon: "🥩" },
+    { name: "Beverages", icon: "🥤" },
+    { name: "Snacks", icon: "🍿" },
+    { name: "Vegetables", icon: "🥦" },
   ];
 
   return (
     <div style={styles.sidebar}>
-      <h3 style={styles.sidebarTitle}>Departments</h3>
-      <div style={styles.list}>
-        {categories.map(cat => (
-          <button
-            key={cat.name}
-            onClick={() => setCategory(cat.name)}
-            onMouseEnter={(e) => {
-              if (activeCategory !== cat.name) e.target.style.background = 'rgba(255,255,255,0.2)';
-            }}
-            onMouseLeave={(e) => {
-              if (activeCategory !== cat.name) e.target.style.background = 'rgba(255,255,255,0.1)';
-            }}
-            style={{
-              ...styles.btn,
-              backgroundColor: activeCategory === cat.name ? '#27ae60' : 'rgba(255,255,255,0.1)',
-              color: 'white',
-              fontWeight: activeCategory === cat.name ? 'bold' : 'normal',
-              boxShadow: activeCategory === cat.name ? '0 4px 15px rgba(39, 174, 96, 0.3)' : 'none',
-              transform: activeCategory === cat.name ? 'translateX(5px)' : 'none'
-            }}
-          >
-            <span style={{ marginRight: '12px' }}>{cat.icon}</span>
-            {cat.name}
-          </button>
-        ))}
+      <h3 style={styles.sidebarTitle}>Menu</h3>
+      
+      <div style={styles.menuContainer}>
+        {/* Outlined Hamburger Toggle Button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          style={styles.hamburgerBtn}
+          aria-label="Toggle Categories"
+        >
+          <span style={{ fontSize: '18px', transition: 'transform 0.3s ease', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+            {isOpen ? '✕' : '☰'}
+          </span>
+          <span style={{ marginLeft: '12px', fontSize: '15px', fontWeight: 'bold' }}>
+            Categories
+          </span>
+        </button>
+
+        {/* Expandable Categories List (Inline, not absolute) */}
+        <div style={{
+          ...styles.categoriesList,
+          maxHeight: isOpen ? '500px' : '0px', // Animates the height
+          opacity: isOpen ? 1 : 0,
+          visibility: isOpen ? 'visible' : 'hidden',
+          marginTop: isOpen ? '15px' : '0px',
+        }}>
+          {categories.map(cat => (
+            <button
+              key={cat.name}
+              onClick={() => {
+                setCategory(cat.name);
+                // Optional: keep setIsOpen(false) here if you want it to auto-close after picking
+              }}
+              onMouseEnter={(e) => {
+                if (activeCategory !== cat.name) e.target.style.background = 'rgba(255,255,255,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                if (activeCategory !== cat.name) e.target.style.background = 'rgba(255,255,255,0.05)';
+              }}
+              style={{
+                ...styles.btn,
+                backgroundColor: activeCategory === cat.name ? '#27ae60' : 'rgba(255,255,255,0.05)',
+                color: 'white',
+                fontWeight: activeCategory === cat.name ? 'bold' : 'normal',
+                boxShadow: activeCategory === cat.name ? '0 4px 15px rgba(39, 174, 96, 0.3)' : 'none',
+              }}
+            >
+              <span style={{ marginRight: '12px' }}>{cat.icon}</span>
+              {cat.name}
+            </button>
+          ))}
+        </div>
       </div>
       
       <div style={styles.footer}>
@@ -52,40 +83,63 @@ const Sidebar = ({ activeCategory, setCategory }) => {
 const styles = {
   sidebar: { 
     width: '250px', 
-    background: 'rgba(20, 20, 20, 0.8)', 
-    backdropFilter: 'blur(15px)', 
+    background: '#353535', // Match the solid dark grey from your screenshot
     padding: '25px 20px', 
     display: 'flex', 
     flexDirection: 'column', 
     borderRight: '1px solid rgba(255,255,255,0.1)',
-    height: 'calc(100vh - 80px)', // Adjust based on your navbar height
+    height: 'calc(100vh - 80px)', 
     position: 'sticky',
-    top: '80px'
+    top: '80px',
+    boxSizing: 'border-box'
   },
   sidebarTitle: { 
     color: '#f1c40f', 
     letterSpacing: '2px', 
-    marginBottom: '25px', 
+    marginBottom: '15px', 
     fontSize: '12px', 
     fontWeight: '800',
     textTransform: 'uppercase',
-    opacity: 0.8
+    opacity: 0.9
   },
-  list: { 
-    display: 'flex', 
-    flexDirection: 'column', 
-    gap: '10px' 
+  menuContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%',
+  },
+  hamburgerBtn: {
+    width: '100%',
+    padding: '12px 16px',
+    background: 'transparent',
+    border: '1px solid #ffffff', // The white outline from your image
+    borderRadius: '8px',
+    color: 'white',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    transition: 'all 0.3s ease',
+  },
+  categoriesList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    overflowY: 'auto', // Allows scrolling if list gets too long
+    overflowX: 'hidden',
+    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    scrollbarWidth: 'none', // Hides scrollbar in Firefox
   },
   btn: { 
-    padding: '14px 18px', 
+    padding: '14px 16px', 
     border: 'none', 
-    borderRadius: '12px', 
+    borderRadius: '8px', 
     cursor: 'pointer', 
     textAlign: 'left', 
     fontSize: '15px', 
-    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'all 0.2s ease',
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    width: '100%'
   },
   footer: { 
     marginTop: 'auto', 
@@ -108,14 +162,5 @@ const styles = {
     animation: 'pulse 2s infinite'
   }
 };
-
-// Note: To make the pulse animation work, ensure this is in your App.css:
-/*
-@keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
-}
-*/
 
 export default Sidebar;
