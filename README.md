@@ -12,7 +12,9 @@ which are then synchronized across a full-stack MERN application.
 
 The project is built using a modern full-stack architecture to ensure scalability and real-time performance:
 
-Frontend: React.js (for a responsive, component-based user interface).
+Frontend: React.js (for a responsive, component-based user interface),Python, Javascript
+
+
 
 Backend: Node.js & Express.js (handling API routing and server-side logic).
 
